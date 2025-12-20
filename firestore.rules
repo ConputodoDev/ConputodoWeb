@@ -1,34 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Función auxiliar: Verifica si es el Admin (autenticado)
+    
+    // Función auxiliar para saber si es el Administrador
+    // Como NO tienes registro público, cualquiera que esté logueado eres TÚ (el Admin).
     function isAdmin() {
       return request.auth != null;
     }
 
-    // 1. PRODUCTOS: Todos ven, solo Admin edita
+    // --- 1. PRODUCTOS ---
+    // Cualquiera ve el catálogo. Solo Admin edita.
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 2. CONFIGURACIÓN: Todos leen tasa, solo Admin edita
+    // --- 2. PEDIDOS (Orders) ---
+    // Cualquiera puede CREAR un pedido (comprar).
+    // Solo el Admin puede LEER la lista de pedidos o modificar estados.
+    match /orders/{orderId} {
+      allow create: if true; 
+      allow read, update, delete: if isAdmin();
+    }
+
+    // --- 3. CONFIGURACIÓN (Tasas, Marketing) ---
+    // El público necesita LEER la tasa para calcular precios en Bs.
+    // Solo Admin puede cambiar la tasa.
     match /settings/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
-
-    // 3. PEDIDOS: Clientes crean, solo Admin lee/edita todo
-    match /orders/{orderId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    // 4. MAYORISTAS: Clientes crean, solo Admin lee
+    
+    // --- 4. SOLICITUDES MAYORISTAS ---
+    // Cualquiera puede enviar solicitud. Solo Admin las ve.
     match /wholesale_requests/{requestId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
+    }
+    
+    // --- 5. REGLA POR DEFECTO (Bloqueo total) ---
+    // Cualquier otra colección no mencionada aquí está bloqueada por seguridad.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
