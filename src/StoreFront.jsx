@@ -389,7 +389,7 @@ export default function StoreFront() {
                         )}
                     </div>
                 </div>
-                <span className="text-sm text-slate-500">{finalFilteredProducts.length} resultados</span>
+                <span className="text-sm text-slate-500">{finalFilteredProducts.length} resultadoss</span>
              </div>
 
              {loading ? <div className="text-center py-20"><Loader2 className="animate-spin mx-auto text-[#FF6600]"/></div> : (
