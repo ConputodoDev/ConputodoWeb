@@ -16,3 +16,4 @@ firebase-debug.log*
 # Variables de entorno locales (para seguridad)
 .env
 .env.local
+.firebase/
