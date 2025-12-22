@@ -14,14 +14,6 @@ apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// --- AGREGAR ESTO PARA DEBUG (Bórralo después) ---
-console.log("DEBUG CONFIG:", {
-  apiKey: firebaseConfig.apiKey ? "OK" : "MISSING",
-  projectId: firebaseConfig.projectId ? "OK" : "MISSING",
-  fullConfig: firebaseConfig // Solo para ver si están undefined
-});
-// ------------------------------------------------
-
 // Inicializamos la app
 const app = initializeApp(firebaseConfig);
 
