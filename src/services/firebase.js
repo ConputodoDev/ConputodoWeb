@@ -5,13 +5,13 @@ import { getAuth } from "firebase/auth";
 
 // Usamos las credenciales directas para asegurar la conexión inmediata
 const firebaseConfig = {
-  apiKey: "AIzaSyBQNJvum1U9JqnIiM-e_Nkibvjxa_o5OO8",
-  authDomain: "tienda-admin-1c383.firebaseapp.com",
-  projectId: "tienda-admin-1c383",
-  storageBucket: "tienda-admin-1c383.firebasestorage.app",
-  messagingSenderId: "869294981306",
-  appId: "1:869294981306:web:92fdc803e7424bc3b50283",
-  measurementId: "G-0PKGRZ1TD9"
+apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Inicializamos la app

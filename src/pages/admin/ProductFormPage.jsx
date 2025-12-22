@@ -44,7 +44,7 @@ const ProductFormPage = ({ productToEdit, onBack }) => {
   const categoriesList = ['Computadoras', 'Laptops', 'Refurbished', 'Impresoras', 'UPS', 'Gamer', 'Accesorios'];
   const brandsList = ['HP', 'Dell', 'Lenovo', 'Asus', 'Canon', 'Epson', 'Logitech'];
 
-  const geminiApiKey = "AIzaSyCXrzfjky4yrfBVT_JY8uXzVrgK1O2KlRM"; // Mantener tu API Key
+  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   // --- INICIALIZACIÓN (MODO EDICIÓN) ---
   useEffect(() => {

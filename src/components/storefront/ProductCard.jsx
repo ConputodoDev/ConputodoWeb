@@ -1,20 +1,15 @@
 import React from 'react';
 import { ShoppingCart, Heart, AlertCircle } from 'lucide-react';
 
-const ProductCard = ({ product, exchangeRate, onAddToCart, onClick }) => {
+const ProductCard = ({ product, onAddToCart, onClick }) => {
   // Helpers para estado del producto
-  const hasStock = product.inStock !== false && product.stock !== 0; // Ajustado a tu lógica de 'inStock' boolean o número
+  const hasStock = product.inStock !== false && product.stock !== 0; 
   const isLowStock = product.stock > 0 && product.stock <= 3;
   
-  // Cálculo de precio en Bolívares
-  // Nota: prices.usd viene de tu DB
+  // Precio en USD
   const priceUsd = product.prices?.usd || 0;
-  const priceBs = (priceUsd * exchangeRate).toLocaleString('es-VE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
 
-  // Manejo de imagen: Soporta estructura { main: 'url' } o array ['url']
+  // Manejo de imagen
   const imageUrl = product.images?.main || product.images?.[0] || null;
 
   return (
@@ -27,7 +22,6 @@ const ProductCard = ({ product, exchangeRate, onAddToCart, onClick }) => {
             DESTACADO
           </span>
         )}
-        {/* Si tienes campo de oferta/nuevo en el futuro, agrégalo aquí */}
       </div>
 
       {/* --- Imagen del Producto --- */}
@@ -64,7 +58,7 @@ const ProductCard = ({ product, exchangeRate, onAddToCart, onClick }) => {
           {product.category || 'General'}
         </div>
 
-        {/* Título (CORREGIDO: usa .title) */}
+        {/* Título */}
         <h3 
           onClick={onClick}
           className="font-bold text-gray-800 text-lg leading-tight mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors cursor-pointer"
@@ -72,7 +66,7 @@ const ProductCard = ({ product, exchangeRate, onAddToCart, onClick }) => {
           {product.title} 
         </h3>
 
-        {/* Indicador de Stock Bajo (Opcional) */}
+        {/* Indicador de Stock Bajo */}
         {isLowStock && (
           <div className="text-xs text-orange-600 flex items-center gap-1 mb-2 font-medium">
             <AlertCircle size={12} />
@@ -83,20 +77,20 @@ const ProductCard = ({ product, exchangeRate, onAddToCart, onClick }) => {
         <div className="mt-auto pt-3 border-t border-gray-50">
           <div className="flex items-end justify-between gap-2">
             
-            {/* Precios */}
+            {/* Solo Precio USD */}
             <div className="flex flex-col">
               <span className="text-2xl font-black text-gray-900 leading-none">
                 ${parseFloat(priceUsd).toFixed(2)}
               </span>
-              <span className="text-sm text-gray-500 font-medium mt-1">
-                Bs {priceBs}
+              <span className="text-xs text-gray-400 font-medium mt-1">
+                Precio Base
               </span>
             </div>
 
             {/* Botón de Acción */}
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Evitar abrir el detalle al dar clic en comprar
+                e.stopPropagation(); 
                 if (hasStock) onAddToCart(product);
               }}
               disabled={!hasStock}

@@ -1,25 +1,17 @@
 import React, { useEffect } from 'react';
 import { ArrowRight, Check, XCircle, ShoppingCart, MessageCircle, FileText } from 'lucide-react';
 
-const ProductDetailPage = ({ product, onBack, onAddToCart, exchangeRate }) => {
-  // Scroll al inicio al cargar
+const ProductDetailPage = ({ product, onBack, onAddToCart }) => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [product]);
 
   if (!product) return null;
 
-  // Lógica de disponibilidad (Ajustada a tus datos: inStock puede ser bool)
   const isAvailable = product.inStock !== false && product.stock !== 0;
-
-  // Manejo de Imágenes (Compatibilidad con estructura antigua y nueva)
   const mainImage = product.images?.main || product.images?.[0];
-  // Si gallery existe úsala, si no, usa el array images completo como fallback
   const gallery = product.images?.gallery || (Array.isArray(product.images) ? product.images : []) || [];
-  
-  // Precio en Bs
   const priceUsd = product.prices?.usd || 0;
-  const priceBs = (priceUsd * exchangeRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="container mx-auto px-4 py-8 animate-in slide-in-from-right duration-300">
@@ -42,7 +34,6 @@ const ProductDetailPage = ({ product, onBack, onAddToCart, exchangeRate }) => {
           </div>
           {gallery.length > 0 && (
             <div className="grid grid-cols-4 gap-4">
-              {/* Mostramos la principal también en miniatura o solo la galería extra */}
               {[mainImage, ...gallery].slice(0, 4).map((src, i) => (
                 src && (
                   <div key={i} className="aspect-square border rounded-xl overflow-hidden cursor-pointer hover:border-[#FF6600] hover:shadow-md transition-all bg-white">
@@ -60,18 +51,15 @@ const ProductDetailPage = ({ product, onBack, onAddToCart, exchangeRate }) => {
             {product.category || 'General'}
           </div>
           
-          {/* TÍTULO CORREGIDO */}
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 leading-tight">
             {product.title}
           </h1>
           
+          {/* Precio solo en USD */}
           <div className="flex flex-col mb-6 pb-6 border-b border-gray-100">
             <div className="flex items-end gap-3">
                <span className="text-4xl font-black text-slate-900">${parseFloat(priceUsd).toFixed(2)}</span>
-               <span className="text-sm text-slate-500 mb-2 font-medium">USD (Exento)</span>
-            </div>
-            <div className="text-lg text-slate-500 font-medium mt-1">
-               Bs {priceBs}
+               <span className="text-sm text-slate-500 mb-2 font-medium">USD</span>
             </div>
           </div>
 
