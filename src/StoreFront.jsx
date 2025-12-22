@@ -19,21 +19,58 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import ContactPage from './pages/ContactPage';
 import LegalPage from './pages/LegalPage';
 
-// --- COMPONENTES FLOTANTES ---
+// --- CONFIGURACIÓN RÁPIDA ---
+const COMPANY_PHONE = "584122163876"; // Tu número de WhatsApp
+
+// --- COMPONENTE FLOTANTE MEJORADO ---
 const FloatingWhatsapp = () => (
-  <a href="https://wa.me/584120000000" target="_blank" rel="noreferrer" className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform">
-    <MessageCircle size={32}/>
+  <a 
+    href={`https://wa.me/${COMPANY_PHONE}?text=Hola%20Conputodo,%20tengo%20una%20duda.`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform duration-200 flex items-center justify-center group"
+    aria-label="Contactar por WhatsApp"
+  >
+    <MessageCircle size={32} />
+    
+    {/* Tooltip que aparece al pasar el mouse */}
+    <span className="absolute right-full mr-3 px-3 py-1 bg-white text-slate-800 text-xs font-bold rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-100">
+      ¡Escríbenos!
+    </span>
   </a>
 );
 
-const CookieBanner = ({ onAccept }) => (
-  <div className="fixed bottom-0 w-full bg-neutral-900 text-white p-4 flex justify-between items-center z-50 shadow-lg animate-in slide-in-from-bottom">
-    <p className="text-sm pr-4">Usamos cookies para mejorar tu experiencia en la tienda.</p>
-    <button onClick={onAccept} className="bg-[#FF6600] px-4 py-2 rounded text-sm font-bold whitespace-nowrap hover:bg-orange-700 transition-colors">
-      Aceptar
-    </button>
-  </div>
-);
+// --- COMPONENTE COOKIE BANNER MEJORADO ---
+const CookieBanner = ({ onAccept }) => {
+  return (
+    <div className="fixed bottom-0 left-0 w-full bg-neutral-900 border-t-4 border-[#FF6600] text-white p-6 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom duration-500">
+      <div className="container mx-auto max-w-4xl flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        {/* ZONA DE TEXTO (Edita aquí el mensaje) */}
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">🍪</span>
+          <div>
+            <h4 className="font-bold text-[#FF6600] mb-1">Tu privacidad nos importa</h4>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              Usamos cookies propias y de terceros para mejorar tu experiencia de compra y recordar tu carrito. 
+              Al continuar navegando, aceptas nuestro uso de cookies.
+            </p>
+          </div>
+        </div>
+
+        {/* ZONA DE BOTONES */}
+        <div className="flex gap-3 shrink-0">
+          <button 
+            onClick={onAccept} 
+            className="bg-[#FF6600] hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg shadow-orange-900/50"
+          >
+            Aceptar todo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function StoreFront() {
   // --- ESTADOS GLOBALES ---
@@ -45,7 +82,15 @@ export default function StoreFront() {
   const [viewParams, setViewParams] = useState(null); 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
-  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  // ANTES:
+// const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+// AHORA (Inicialización Inteligente):
+const [showCookieBanner, setShowCookieBanner] = useState(() => {
+  // Verificamos si YA existe la cookie antes de pintar nada
+  return !localStorage.getItem('conputodo_cookie_consent');
+});
 
   useEffect(() => { localStorage.setItem('conputodo_view', currentView); }, [currentView]);
 
@@ -57,7 +102,7 @@ export default function StoreFront() {
       } catch (e) { console.error("Error tasa:", e); }
     };
     fetchSettings();
-    if (!localStorage.getItem('conputodo_cookie_consent')) setShowCookieBanner(true);
+    //if (!localStorage.getItem('conputodo_cookie_consent')) setShowCookieBanner(true);
   }, []);
 
   const navigateTo = (view, params = null) => {

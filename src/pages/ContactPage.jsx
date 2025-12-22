@@ -38,41 +38,61 @@ const ContactPage = () => {
   return (
     <div className="animate-in fade-in duration-500">
       <div className="bg-neutral-900 text-white py-20 text-center">
-        <h1 className="text-4xl font-bold mb-4">Contáctanos</h1>
-        <p className="text-neutral-400">Estamos en Maracay, Edo. Aragua</p>
+        <h1 className="mb-4 text-4xl font-bold">Contáctanos</h1>
+        <p className="max-w-xl mx-auto text-neutral-400">Estamos ubicados en el corazón de Maracay para ofrecerte las mejores soluciones tecnológicas.</p>
       </div>
 
       <div className="container mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* INFO + MAPA */}
         <div className="space-y-8">
+          <h2 className="text-2xl font-bold text-slate-900">Información de la Tienda</h2>
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-orange-100 text-[#FF6600] rounded-lg"><MapPin size={24}/></div>
-              <div>
-                <h4 className="font-bold text-slate-800">Ubicación</h4>
-                <p className="text-slate-600">CC Global, Maracay.</p>
-              </div>
+                  {/* INFORMACION */}
+                  <div>
+                    <h4 className="font-bold text-slate-800">Ubicación</h4>
+                    <p className="text-slate-600">Av. Bolívar, Centro Comercial Global, Local 12.<br/>Maracay, Edo. Aragua.</p>
+                    {/*LINK DE GOOGLE MAPS */}
+                    <a href="https://maps.app.goo.gl/mZGVGx6C4LHT69ur6" target="_blank" rel="noopener noreferrer" className="text-sm text-[#FF6600] font-bold hover:underline flex items-center gap-1 mt-1">
+                      Ver en Google Maps <ArrowRight size={14} />
+                    </a>
+                  </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="p-3 bg-orange-100 text-[#FF6600] rounded-lg"><Phone size={24}/></div>
               <div>
                 <h4 className="font-bold text-slate-800">Teléfonos</h4>
-                <p className="text-slate-600">+58 412 000 0000</p>
+                <p className="text-slate-600">+58 412-2163876</p>
               </div>
             </div>
           </div>
-          
-          <div className="w-full h-80 rounded-2xl overflow-hidden border border-gray-200 shadow-inner relative z-0">
-            <MapContainer center={[10.249758418955139, -67.60040315522524]} zoom={17} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-              <TileLayer attribution='© OSM' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-              <Marker position={[10.249758418955139, -67.60040315522524]}><Popup>Conputodo</Popup></Marker>
-            </MapContainer>
+
+          {/* MAPA INTERACTIVO (LEAFLET) */}
+            <div className="relative z-0 w-full overflow-hidden border border-gray-200 shadow-inner h-80 rounded-2xl">
+               <MapContainer 
+                  center={[10.249758418955139, -67.60040315522524]} // COORDENADAS EXACTAS
+                  zoom={17} 
+                  scrollWheelZoom={false} 
+                  style={{ height: "100%", width: "100%" }}
+                >
+                  <TileLayer
+                    attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={[10.249758418955139, -67.60040315522524]}>
+                    <Popup>
+                      <strong>Conputodo</strong><br />¡Te esperamos aquí!
+                    </Popup>
+                  </Marker>
+                </MapContainer>
           </div>
         </div>
 
         {/* FORMULARIO */}
         <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl">
           <h3 className="text-xl font-bold mb-6 text-slate-900">¿Eres Mayorista?</h3>
+            <p className="mb-6 text-sm text-slate-500">Solicita lista de precios para distribuidores. Todos los campos son obligatorios.</p>          
           {status === 'success' ? (
             <div className="bg-green-50 text-green-700 p-6 rounded-xl text-center animate-in zoom-in">
               <Check size={24} className="mx-auto mb-2"/>
