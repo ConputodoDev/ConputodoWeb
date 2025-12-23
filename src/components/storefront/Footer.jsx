@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, ArrowRight, Instagram, Facebook } from 'lucide-react';
+import { MapPin, ArrowRight, Instagram, Facebook, MessageCircle, Video } from 'lucide-react';
 
 /**
  * Pie de página global
@@ -21,7 +21,7 @@ const Footer = ({ onNavigate }) => {
               Conputodo
             </div>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Tu aliado tecnológico de confianza en Maracay. Venta de equipos, servicio técnico y asesoría profesional.
+              Tu aliado tecnológico de confianza en Maracay. Especialistas en computación, redes, energía y el apasionante mundo Gaming. Calidad y garantía en cada equipo.
             </p>
             <div className="pt-4 flex items-center gap-2 text-neutral-500 text-xs">
               <MapPin size={16}/> Maracay, Edo. Aragua
@@ -44,12 +44,12 @@ const Footer = ({ onNavigate }) => {
               </li>
               <li>
                 <button onClick={() => onNavigate('contact')} className="hover:text-[#FF6600] transition-colors flex items-center gap-2">
-                  <ArrowRight size={14}/> Contacto
+                  <ArrowRight size={14}/> Ubicación y Contacto
                 </button>
               </li>
               <li>
                 <button onClick={() => onNavigate('legal')} className="hover:text-[#FF6600] transition-colors flex items-center gap-2">
-                  <ArrowRight size={14}/> Legales
+                  <ArrowRight size={14}/> Políticas y Garantía
                 </button>
               </li>
             </ul>
@@ -69,27 +69,43 @@ const Footer = ({ onNavigate }) => {
                   <Facebook size={20} /> <span>Conputodo Oficial</span>
                 </a>
               </li>
+              <li><a href="#" target="_blank" className="flex items-center gap-3 transition-colors text-neutral-400 hover:text-green-500">
+<MessageCircle size={20} /> <span>WhatsApp Ventas</span></a></li>       
+                            <li>
+                                <a href="#" target="_blank" className="flex items-center gap-3 transition-colors text-neutral-400 hover:text-white">
+                                    <Video size={20} /> <span>@conputodo (TikTok)</span>
+                                </a>
+                            </li>              
             </ul>
           </div>
 
           {/* Columna 4: Redes Gamer */}
           <div>
             <h4 className="font-bold text-lg mb-6 border-b border-neutral-800 pb-2 inline-block">Zona Gamer</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href="https://instagram.com" target="_blank" rel="noreferrer" className="flex items-center gap-3 text-neutral-400 hover:text-purple-500 transition-colors">
-                  <Instagram size={20} /> <span>@conputodogamer</span>
-                </a>
-              </li>
-            </ul>
+                        <ul className="space-y-4">
+                            <li>
+                                <a href="#" target="_blank" className="flex items-center gap-3 transition-colors text-neutral-400 hover:text-purple-500 group">
+                                    <div className="p-1 transition-colors rounded bg-neutral-800 group-hover:bg-purple-900"><Instagram size={16} /></div>
+                                    <span>@conputodogamer</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" target="_blank" className="flex items-center gap-3 transition-colors text-neutral-400 hover:text-blue-600 group">
+                                    <div className="p-1 transition-colors rounded bg-neutral-800 group-hover:bg-blue-900"><Facebook size={16} /></div>
+                                    <span>Conputodo Gamer</span>
+                                </a>
+                            </li>
+                        </ul>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-neutral-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-neutral-600">
-          <p>© 2025 Josep Suply, C.A. Todos los derechos reservados.</p>
-          <p>Desarrollado con ❤️ en Venezuela.</p>
-        </div>
+        <div className="flex flex-col items-center justify-between pt-8 text-xs border-t border-neutral-800 md:flex-row text-neutral-600">
+                    <p>© 2025 Josep Suply, C.A. - RIF: J-12345678-9</p>
+                    <p className="flex gap-4 mt-2 md:mt-0">
+                        <span>Desarrollado con ❤️ en Venezuela</span>
+                    </p>
+                </div>
       </div>
     </footer>
   );
