@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, ArrowRight, Check } from 'lucide-react';
+import { MapPin, Phone, ArrowRight, Check, Building, Mail } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -66,6 +66,13 @@ const ContactPage = () => {
                 <p className="text-slate-600">+58 412-2163876</p>
               </div>
             </div>
+                          <div className="flex items-start gap-4">
+                              <div className="p-3 bg-orange-100 text-[#FF6600] rounded-lg"><Mail size={24}/></div>
+                              <div>
+                                  <h4 className="font-bold text-slate-800">Correo Electrónico</h4>
+                                  <p className="text-slate-600">ventas@conputodo.com</p>
+                              </div>
+                          </div>
           </div>
 
           {/* MAPA INTERACTIVO (LEAFLET) */}
@@ -91,7 +98,7 @@ const ContactPage = () => {
 
         {/* FORMULARIO */}
         <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl">
-          <h3 className="text-xl font-bold mb-6 text-slate-900">¿Eres Mayorista?</h3>
+          <h3 className="flex items-center gap-2 mb-2 text-xl font-bold text-slate-900"><Building size={20} className="text-[#FF6600]"/> Mayoristas</h3>
             <p className="mb-6 text-sm text-slate-500">Solicita lista de precios para distribuidores. Todos los campos son obligatorios.</p>          
           {status === 'success' ? (
             <div className="bg-green-50 text-green-700 p-6 rounded-xl text-center animate-in zoom-in">
@@ -112,7 +119,7 @@ const ContactPage = () => {
                 {status === 'loading' ? 'Enviando...' : 'Solicitar Presupuesto'}
               </button>
             </form>
-          )}
+          )}S
         </div>
       </div>
     </div>
