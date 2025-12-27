@@ -3,14 +3,14 @@ import { collection, getDocs, updateDoc, doc, getDoc, setDoc, deleteDoc } from '
 import { db } from '../../services/firebase';
 import { 
   Search, Plus, Loader2, Package, Filter, Check, X, Edit, Trash2, 
-  XCircle, ChevronDown, RotateCcw, ImageIcon, ChevronLeft, ChevronRight, Layers 
+  XCircle, ChevronDown, RotateCcw, ImageIcon, ChevronLeft, ChevronRight, Layers, DollarSign 
 } from 'lucide-react';
 import RateWidget from '../../components/dashboard/RateWidget';
-import { useAdminAuth } from '../../context/AdminAuthContext'; // Importar Contexto
+import { useAdminAuth } from '../../context/AdminAuthContext'; 
 
 const ProductListPage = ({ onChangeView, isTrashView = false }) => {
-  const { user } = useAdminAuth(); // Obtener usuario
-  const isAdmin = user?.role === 'admin'; // Verificar permiso
+  const { user } = useAdminAuth(); 
+  const isAdmin = user?.role === 'admin'; 
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,23 +35,20 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Tasas (Solo si es admin las editamos, pero todos las necesitan para calcular Bs)
       const settings = await getDoc(doc(db, "settings", "global"));
       if(settings.exists()) setRates(settings.data());
       else {
          const def = { exchangeRate: 64.50, exchangeRateBCV: 55.00 };
-         if (isAdmin) await setDoc(doc(db, "settings", "global"), def); // Solo admin crea
+         if (isAdmin) await setDoc(doc(db, "settings", "global"), def);
          setRates(def);
       }
 
-      // 2. Productos
       const qs = await getDocs(collection(db, "products"));
       const allProducts = qs.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       
       setProducts(allProducts);
 
-      // Extraer filtros únicos
       setUniqueCategories([...new Set(allProducts.map(p => p.category).filter(Boolean))]);
       setUniqueBrands([...new Set(allProducts.map(p => p.brand).filter(Boolean))]);
 
@@ -64,7 +61,6 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   const calculateBs = (usd) => (parseFloat(usd) || 0) * rates.exchangeRate;
   const calculatePVP = (usd) => (!rates.exchangeRate || !rates.exchangeRateBCV) ? 0 : ((parseFloat(usd)||0) * rates.exchangeRate) / rates.exchangeRateBCV;
 
-  // Filtrado
   const filteredProducts = products.filter(product => {
     const isDeleted = product.status === 'trash';
     if (isTrashView && !isDeleted) return false;
@@ -78,7 +74,6 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
     return matchSearch && matchCategory && matchBrand;
   });
 
-  // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
@@ -86,7 +81,7 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
 
   // --- ACCIONES (SOLO ADMIN) ---
   const handleQuickStatusChange = async (productId, newStatus) => {
-    if (!isAdmin) return; // Protección
+    if (!isAdmin) return;
     try {
       await updateDoc(doc(db, "products", productId), { status: newStatus, updatedAt: new Date() });
       setProducts(products.map(p => p.id === productId ? { ...p, status: newStatus } : p));
@@ -94,7 +89,7 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   };
 
   const saveQuickEditPrice = async (productId) => {
-    if (!isAdmin) return; // Protección
+    if (!isAdmin) return;
     try {
       const newUsd = parseFloat(quickEditPriceValue) || 0;
       await updateDoc(doc(db, "products", productId), { "prices.usd": newUsd, updatedAt: new Date() });
@@ -104,7 +99,7 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   };
 
   const handleDelete = async (product) => {
-    if (!isAdmin) return; // Protección
+    if (!isAdmin) return;
     if (product.status === 'trash') {
        if (window.confirm("⛔ ¿Eliminar definitivamente?")) {
           await deleteDoc(doc(db, "products", product.id));
@@ -127,10 +122,9 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
            <p className="text-neutral-500 text-sm">{filteredProducts.length} productos</p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
-           {/* Solo Admin ve las tasas */}
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
            {isAdmin && (
-             <>
+             <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
                <RateWidget 
                   label="Tasa" 
                   rate={rates.exchangeRate} 
@@ -145,11 +139,11 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
                   onRateUpdate={(val) => setRates(prev => ({...prev, exchangeRateBCV: val}))}
                   colorClass="bg-blue-500"
                />
-             </>
+             </div>
            )}
            
            {!isTrashView && isAdmin && (
-             <button onClick={() => onChangeView('product-create')} className="flex items-center gap-2 px-4 py-2 bg-[#FF6600] hover:bg-orange-700 text-white rounded-lg shadow-sm font-medium ml-2 transition-colors">
+             <button onClick={() => onChangeView('product-create')} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#FF6600] hover:bg-orange-700 text-white rounded-lg shadow-sm font-medium transition-colors">
                <Plus size={20} /> Nuevo
              </button>
            )}
@@ -157,12 +151,12 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
       </div>
 
       {/* Barra de Herramientas (Search + Filtros) */}
-      <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-         <div className="relative w-full sm:w-96">
+      <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+         <div className="relative w-full md:w-96">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:border-[#FF6600]" />
          </div>
-         <div className="relative">
+         <div className="relative flex justify-end">
             <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm font-medium ${showFilters ? 'border-[#FF6600] bg-orange-50 text-[#FF6600]' : 'border-neutral-300'}`}>
               <Filter size={16} /> Filtros
             </button>
@@ -177,12 +171,71 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
          </div>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
-        {loading ? <div className="p-12 text-center text-neutral-500"><Loader2 size={32} className="animate-spin mx-auto mb-2 text-[#FF6600]" />Cargando...</div> : 
-         filteredProducts.length === 0 ? <div className="p-12 text-center text-neutral-500"><Package size={48} className="mx-auto mb-2 text-neutral-300" />Sin resultados</div> : (
+      {/* Contenido Principal */}
+      <div className="bg-transparent md:bg-white rounded-xl md:border border-neutral-200 md:shadow-sm overflow-hidden">
+        {loading ? (
+            <div className="p-12 text-center text-neutral-500"><Loader2 size={32} className="animate-spin mx-auto mb-2 text-[#FF6600]" />Cargando...</div>
+        ) : filteredProducts.length === 0 ? (
+            <div className="p-12 text-center text-neutral-500"><Package size={48} className="mx-auto mb-2 text-neutral-300" />Sin resultados</div>
+        ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* VISTA MÓVIL (Cards) - Visible solo en pantallas pequeñas (< md) */}
+            <div className="md:hidden grid grid-cols-1 gap-4">
+                {currentItems.map((product) => {
+                    const isVariable = product.variants && product.variants.length > 0;
+                    const priceBs = calculateBs(product.prices?.usd);
+                    const pvp = calculatePVP(product.prices?.usd);
+                    
+                    return (
+                        <div key={product.id} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex gap-4">
+                            {/* Imagen */}
+                            <div className="w-24 h-24 bg-neutral-50 rounded-lg border border-neutral-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                {product.images?.main ? <img src={product.images.main} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={24} className="text-neutral-300"/>}
+                            </div>
+                            
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-bold text-neutral-800 text-sm line-clamp-2 leading-tight">{product.title}</h3>
+                                    {isAdmin && (
+                                        <button onClick={() => onChangeView('product-edit', product)} className="text-neutral-400 hover:text-[#FF6600] p-1"><Edit size={16}/></button>
+                                    )}
+                                </div>
+                                
+                                <div className="text-xs text-neutral-500 mb-2 flex items-center gap-2">
+                                    <span className="capitalize">{product.category || 'General'}</span>
+                                    {isVariable && <span className="bg-purple-50 text-purple-700 px-1.5 rounded border border-purple-100 font-bold text-[10px] flex items-center gap-0.5"><Layers size={10}/> {product.variants.length}</span>}
+                                </div>
+
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-lg font-black text-neutral-900">${product.prices?.usd?.toFixed(2)}</span>
+                                            {isVariable && <span className="text-[10px] text-neutral-400">Desde</span>}
+                                        </div>
+                                        <div className="text-xs text-neutral-500 font-medium">Ref: {priceBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</div>
+                                        <div className="text-[10px] text-[#FF6600] font-bold mt-0.5">PVP: ${pvp.toFixed(2)}</div>
+                                    </div>
+                                    
+                                    <div className="flex flex-col items-end gap-1">
+                                        {(product.inStock === false || product.stock === 0) ? (
+                                            <span className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-bold rounded border border-red-100">Agotado</span>
+                                        ) : (
+                                            <span className="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded border border-green-100">Stock: {product.stock}</span>
+                                        )}
+                                        <span className={`text-[10px] font-bold ${product.status === 'published' ? 'text-blue-600' : 'text-neutral-400'}`}>
+                                            {product.status === 'published' ? 'Publicado' : 'Oculto'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* VISTA DE ESCRITORIO (Tabla) - Visible solo en pantallas medianas y grandes (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-orange-50 border-b border-orange-100 text-xs uppercase text-[#FF6600] font-semibold">
                   <tr>
@@ -311,7 +364,8 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
               </table>
             </div>
             
-            <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-100">
+            {/* Paginación */}
+            <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-100 bg-white md:bg-transparent rounded-b-xl">
                 <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border rounded-lg hover:bg-neutral-100 disabled:opacity-50"><ChevronLeft size={20}/></button>
                 <span className="text-sm text-neutral-600">Página <strong>{currentPage}</strong> de <strong>{totalPages || 1}</strong></span>
                 <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border rounded-lg hover:bg-neutral-100 disabled:opacity-50"><ChevronRight size={20}/></button>
