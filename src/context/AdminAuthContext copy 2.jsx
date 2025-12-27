@@ -16,30 +16,21 @@ export const AdminAuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // Buscamos el rol en la base de datos
         try {
-          console.log("🔍 Verificando rol para:", currentUser.email);
+          const userDoc = await getDoc(doc(db, "users", currentUser.email));
+          let role = 'admin'; // Rol por defecto (por seguridad o legacy)
           
-          // Referencia al documento del usuario
-          // IMPORTANTE: Asegúrate que en Firebase la colección es 'users' 
-          // y el ID del documento es EXACTAMENTE el email (ej: ventas@conputodo.com)
-          const userDocRef = doc(db, "users", currentUser.email);
-          const userDoc = await getDoc(userDocRef);
-          
-          let role = 'admin'; // Fallback por defecto
-
           if (userDoc.exists()) {
-            const data = userDoc.data();
-            role = data.role || 'admin';
-            console.log("✅ Rol encontrado en DB:", role);
-          } else {
-            console.warn("⚠️ Usuario no tiene documento en colección 'users'. Asignando Admin por defecto.");
+            role = userDoc.data().role || 'admin';
           }
           
+          // Inyectamos el rol en el objeto usuario
           setUser({ ...currentUser, role });
         } catch (error) {
-          console.error("❌ Error leyendo permisos (Posible bloqueo de Rules):", error);
-          // Si falla (por reglas o red), damos admin para no bloquear al dueño, 
-          // pero esto confirma que hay un problema de permisos.
+          console.error("Error al obtener rol:", error);
+          // En caso de error, asumimos admin para no bloquear al dueño si falla la red, 
+          // o podrías poner 'sales' para ser más restrictivo.
           setUser({ ...currentUser, role: 'admin' });
         }
       } else {

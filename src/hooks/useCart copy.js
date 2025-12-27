@@ -17,27 +17,12 @@ export const useCart = () => {
   // Agregar producto (o incrementar cantidad)
   const addToCart = (product) => {
     setCart(prev => {
-      // Nota: product.id ya viene compuesto si es variante (ej: "prod1-var2")
       const exists = prev.find(item => item.id === product.id);
-      
       if (exists) {
-        // VALIDACIÓN DE STOCK
-        if (exists.qty + 1 > product.stock) {
-           alert("⚠️ ¡No puedes agregar más unidades! Stock máximo alcanzado.");
-           return prev; // No hacemos cambios
-        }
-
         return prev.map(item => 
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
-      
-      // Si es nuevo, verificamos que tenga stock al menos 1
-      if (product.stock < 1) {
-          alert("Producto agotado.");
-          return prev;
-      }
-
       return [...prev, { ...product, qty: 1 }];
     });
     setIsCartOpen(true); // Abrir carrito automáticamente al comprar

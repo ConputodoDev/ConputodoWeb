@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAdminAuth, AdminAuthProvider } from './context/AdminAuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -15,22 +15,12 @@ import MarketingPage from './pages/admin/MarketingPage';
 import DataToolsPage from './pages/admin/DataToolsPage';
 
 // Componente que decide qué mostrar según el usuario
-const DashboardRouter = ({ onSwitchToStore }) => {
+const DashboardRouter = () => {
   const { user, loading } = useAdminAuth();
   
   // Estado de Navegación Local
   const [currentView, setCurrentView] = useState('dashboard');
-  const [editParams, setEditParams] = useState(null); 
-
-  // REDIRECCIÓN DE SEGURIDAD PARA VENTAS
-  useEffect(() => {
-    if (user?.role === 'sales') {
-        // El vendedor SOLO puede estar en product-list
-        if (currentView !== 'product-list') {
-            setCurrentView('product-list');
-        }
-    }
-  }, [user, currentView]);
+  const [editParams, setEditParams] = useState(null); // Para pasar datos (ej: producto a editar)
 
   if (loading) {
     return (
@@ -47,15 +37,12 @@ const DashboardRouter = ({ onSwitchToStore }) => {
 
   // Router interno
   const renderContent = () => {
-    // Si es Vendedor, forzamos siempre la lista de productos
-    // (Doble capa de seguridad: visual y lógica)
-    if (user.role === 'sales') {
-       return <ProductListPage onChangeView={() => {}} />;
-    }
-
     switch (currentView) {
-      case 'dashboard': return <DashboardPage />;
-      case 'orders': return <OrderListPage />;
+      case 'dashboard':
+        return <DashboardPage />;
+      
+      case 'orders':
+        return <OrderListPage />;
       
       case 'product-list':
         return (
@@ -93,10 +80,14 @@ const DashboardRouter = ({ onSwitchToStore }) => {
           />
         );
 
-      case 'marketing': return <MarketingPage />;
-      case 'data-tools': return <DataToolsPage />;
+      case 'marketing':
+        return <MarketingPage />;
         
-      default: return <DashboardPage />;
+      case 'data-tools':
+        return <DataToolsPage />;
+        
+      default:
+        return <DashboardPage />;
     }
   };
 
@@ -104,8 +95,7 @@ const DashboardRouter = ({ onSwitchToStore }) => {
     <AdminLayout 
       currentView={currentView} 
       onChangeView={setCurrentView}
-      pendingOrdersCount={0}
-      onSwitchToStore={onSwitchToStore} 
+      pendingOrdersCount={0} // Podríamos conectar esto al estado global si quisieras
     >
       {renderContent()}
     </AdminLayout>
@@ -113,10 +103,10 @@ const DashboardRouter = ({ onSwitchToStore }) => {
 };
 
 // Punto de entrada principal
-export default function FullDashboard({ onSwitchToStore }) {
+export default function FullDashboard() {
   return (
     <AdminAuthProvider>
-      <DashboardRouter onSwitchToStore={onSwitchToStore} />
+      <DashboardRouter />
     </AdminAuthProvider>
   );
 }

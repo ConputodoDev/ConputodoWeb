@@ -6,12 +6,8 @@ import {
   XCircle, ChevronDown, RotateCcw, ImageIcon, ChevronLeft, ChevronRight, Layers 
 } from 'lucide-react';
 import RateWidget from '../../components/dashboard/RateWidget';
-import { useAdminAuth } from '../../context/AdminAuthContext'; // Importar Contexto
 
 const ProductListPage = ({ onChangeView, isTrashView = false }) => {
-  const { user } = useAdminAuth(); // Obtener usuario
-  const isAdmin = user?.role === 'admin'; // Verificar permiso
-
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,12 +31,12 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Tasas (Solo si es admin las editamos, pero todos las necesitan para calcular Bs)
+      // 1. Tasas
       const settings = await getDoc(doc(db, "settings", "global"));
       if(settings.exists()) setRates(settings.data());
       else {
          const def = { exchangeRate: 64.50, exchangeRateBCV: 55.00 };
-         if (isAdmin) await setDoc(doc(db, "settings", "global"), def); // Solo admin crea
+         await setDoc(doc(db, "settings", "global"), def);
          setRates(def);
       }
 
@@ -84,9 +80,8 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // --- ACCIONES (SOLO ADMIN) ---
+  // --- ACCIONES ---
   const handleQuickStatusChange = async (productId, newStatus) => {
-    if (!isAdmin) return; // Protección
     try {
       await updateDoc(doc(db, "products", productId), { status: newStatus, updatedAt: new Date() });
       setProducts(products.map(p => p.id === productId ? { ...p, status: newStatus } : p));
@@ -94,7 +89,6 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   };
 
   const saveQuickEditPrice = async (productId) => {
-    if (!isAdmin) return; // Protección
     try {
       const newUsd = parseFloat(quickEditPriceValue) || 0;
       await updateDoc(doc(db, "products", productId), { "prices.usd": newUsd, updatedAt: new Date() });
@@ -104,7 +98,6 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
   };
 
   const handleDelete = async (product) => {
-    if (!isAdmin) return; // Protección
     if (product.status === 'trash') {
        if (window.confirm("⛔ ¿Eliminar definitivamente?")) {
           await deleteDoc(doc(db, "products", product.id));
@@ -128,27 +121,21 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-           {/* Solo Admin ve las tasas */}
-           {isAdmin && (
-             <>
-               <RateWidget 
-                  label="Tasa" 
-                  rate={rates.exchangeRate} 
-                  rateKey="exchangeRate"
-                  onRateUpdate={(val) => setRates(prev => ({...prev, exchangeRate: val}))}
-                  colorClass="bg-green-500"
-               />
-               <RateWidget 
-                  label="BCV" 
-                  rate={rates.exchangeRateBCV} 
-                  rateKey="exchangeRateBCV"
-                  onRateUpdate={(val) => setRates(prev => ({...prev, exchangeRateBCV: val}))}
-                  colorClass="bg-blue-500"
-               />
-             </>
-           )}
-           
-           {!isTrashView && isAdmin && (
+           <RateWidget 
+              label="Tasa" 
+              rate={rates.exchangeRate} 
+              rateKey="exchangeRate"
+              onRateUpdate={(val) => setRates(prev => ({...prev, exchangeRate: val}))}
+              colorClass="bg-green-500"
+           />
+           <RateWidget 
+              label="BCV" 
+              rate={rates.exchangeRateBCV} 
+              rateKey="exchangeRateBCV"
+              onRateUpdate={(val) => setRates(prev => ({...prev, exchangeRateBCV: val}))}
+              colorClass="bg-blue-500"
+           />
+           {!isTrashView && (
              <button onClick={() => onChangeView('product-create')} className="flex items-center gap-2 px-4 py-2 bg-[#FF6600] hover:bg-orange-700 text-white rounded-lg shadow-sm font-medium ml-2 transition-colors">
                <Plus size={20} /> Nuevo
              </button>
@@ -193,7 +180,7 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
                     <th className="p-4 text-right">Precios (Calc)</th>
                     <th className="p-4 text-center">Disp.</th>
                     <th className="p-4 text-center">Estado</th>
-                    {isAdmin && <th className="p-4 text-right">Acciones</th>}
+                    <th className="p-4 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 text-sm">
@@ -225,9 +212,9 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
                         </td>
                         <td className="p-4 text-neutral-600 capitalize">{product.category || '-'}</td>
                         
-                        {/* Precio (Edición solo si es Admin) */}
+                        {/* Edición Rápida Precio */}
                         <td className="p-4 text-right font-bold text-neutral-700 relative group/price">
-                          {isAdmin && quickEditPriceId === product.id ? (
+                          {quickEditPriceId === product.id ? (
                               <div className="flex items-center justify-end gap-1">
                                   <input type="number" value={quickEditPriceValue} onChange={(e) => setQuickEditPriceValue(e.target.value)} className="w-20 p-1 border border-[#FF6600] rounded text-right outline-none text-sm" autoFocus onKeyDown={(e) => e.key === 'Enter' && saveQuickEditPrice(product.id)} />
                                   <button onClick={() => saveQuickEditPrice(product.id)} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check size={14}/></button>
@@ -235,11 +222,11 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
                               </div>
                           ) : (
                               <div className="flex items-center justify-end gap-2">
-                                  <span className={`text-lg ${isAdmin ? 'cursor-pointer' : ''}`} onClick={() => { if(isAdmin) { setQuickEditPriceId(product.id); setQuickEditPriceValue(product.prices?.usd || 0); } }}>
+                                  <span className="cursor-pointer text-lg" onClick={() => { setQuickEditPriceId(product.id); setQuickEditPriceValue(product.prices?.usd || 0); }}>
                                     {isVariable && <span className="text-[10px] text-gray-400 mr-1 font-normal">DESDE</span>}
                                     ${product.prices?.usd?.toFixed(2)}
                                   </span>
-                                  {isAdmin && !isVariable && (
+                                  {!isVariable && (
                                     <Edit size={12} className="text-neutral-300 opacity-0 group-hover/price:opacity-100 cursor-pointer hover:text-[#FF6600]" onClick={() => { setQuickEditPriceId(product.id); setQuickEditPriceValue(product.prices?.usd || 0); }}/>
                                   )}
                               </div>
@@ -266,44 +253,35 @@ const ProductListPage = ({ onChangeView, isTrashView = false }) => {
                           {product.status === 'trash' ? (
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded border border-red-200 bg-red-50 text-red-700 text-xs"><Trash2 size={10}/> Eliminado</span>
                           ) : (
-                              // Si es admin, dropdown. Si es ventas, solo texto.
-                              isAdmin ? (
-                                  <div className="relative inline-block">
-                                      <select 
-                                          value={product.status || 'published'} 
-                                          onChange={(e) => handleQuickStatusChange(product.id, e.target.value)} 
-                                          className={`appearance-none pl-6 pr-8 py-1 rounded-full text-xs font-bold border outline-none cursor-pointer ${product.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : ''} ${product.status === 'draft' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''} ${product.status === 'hidden' ? 'bg-neutral-50 text-neutral-600 border-neutral-200' : ''}`}
-                                      >
-                                          <option value="published">Publicado</option><option value="draft">Borrador</option><option value="hidden">Oculto</option>
-                                      </select>
-                                      <div className={`absolute left-2 top-1.5 w-1.5 h-1.5 rounded-full ${product.status === 'published' ? 'bg-green-500' : product.status === 'draft' ? 'bg-yellow-500' : 'bg-neutral-400'}`}></div>
-                                      <ChevronDown size={12} className="absolute right-2 top-1.5 opacity-50 pointer-events-none"/>
-                                  </div>
-                              ) : (
-                                  <span className={`px-2 py-1 rounded-full text-xs font-bold border ${product.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-neutral-50 text-neutral-500 border-neutral-200'}`}>
-                                      {product.status === 'published' ? 'Publicado' : 'Oculto'}
-                                  </span>
-                              )
+                              <div className="relative inline-block">
+                                  <select 
+                                      value={product.status || 'published'} 
+                                      onChange={(e) => handleQuickStatusChange(product.id, e.target.value)} 
+                                      className={`appearance-none pl-6 pr-8 py-1 rounded-full text-xs font-bold border outline-none cursor-pointer ${product.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : ''} ${product.status === 'draft' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''} ${product.status === 'hidden' ? 'bg-neutral-50 text-neutral-600 border-neutral-200' : ''}`}
+                                  >
+                                      <option value="published">Publicado</option><option value="draft">Borrador</option><option value="hidden">Oculto</option>
+                                  </select>
+                                  <div className={`absolute left-2 top-1.5 w-1.5 h-1.5 rounded-full ${product.status === 'published' ? 'bg-green-500' : product.status === 'draft' ? 'bg-yellow-500' : 'bg-neutral-400'}`}></div>
+                                  <ChevronDown size={12} className="absolute right-2 top-1.5 opacity-50 pointer-events-none"/>
+                              </div>
                           )}
                         </td>
 
-                        {isAdmin && (
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {isTrashView ? (
-                                      <>
-                                          <button onClick={() => { updateDoc(doc(db, "products", product.id), { status: 'published' }); fetchData(); }} className="p-2 text-neutral-400 hover:text-green-600 rounded-lg" title="Restaurar"><RotateCcw size={16}/></button>
-                                          <button onClick={() => handleDelete(product)} className="p-2 text-neutral-400 hover:text-red-600 rounded-lg" title="Eliminar"><XCircle size={16}/></button>
-                                      </>
-                                  ) : (
-                                      <>
-                                          <button onClick={() => onChangeView('product-edit', product)} className="p-2 text-neutral-400 hover:text-[#FF6600] rounded-lg" title="Editar"><Edit size={16}/></button>
-                                          <button onClick={() => handleDelete(product)} className="p-2 text-neutral-400 hover:text-red-600 rounded-lg" title="Mover a Papelera"><Trash2 size={16}/></button>
-                                      </>
-                                  )}
-                              </div>
-                            </td>
-                        )}
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {isTrashView ? (
+                                  <>
+                                      <button onClick={() => { updateDoc(doc(db, "products", product.id), { status: 'published' }); fetchData(); }} className="p-2 text-neutral-400 hover:text-green-600 rounded-lg" title="Restaurar"><RotateCcw size={16}/></button>
+                                      <button onClick={() => handleDelete(product)} className="p-2 text-neutral-400 hover:text-red-600 rounded-lg" title="Eliminar"><XCircle size={16}/></button>
+                                  </>
+                              ) : (
+                                  <>
+                                      <button onClick={() => onChangeView('product-edit', product)} className="p-2 text-neutral-400 hover:text-[#FF6600] rounded-lg" title="Editar"><Edit size={16}/></button>
+                                      <button onClick={() => handleDelete(product)} className="p-2 text-neutral-400 hover:text-red-600 rounded-lg" title="Mover a Papelera"><Trash2 size={16}/></button>
+                                  </>
+                              )}
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}

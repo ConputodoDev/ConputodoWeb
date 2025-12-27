@@ -1,22 +1,13 @@
 import React from 'react';
-import { ShoppingCart, Heart, AlertCircle, Eye } from 'lucide-react';
+import { ShoppingCart, Heart, AlertCircle } from 'lucide-react';
 
 const ProductCard = ({ product, onAddToCart, onClick }) => {
   // Helpers para estado del producto
-  const hasVariants = product.variants && product.variants.length > 0;
+  const hasStock = product.inStock !== false && product.stock !== 0; 
+  const isLowStock = product.stock > 0 && product.stock <= 3;
   
-  // Precio en USD (Si es variable, usamos el menor de las variantes)
-  const priceUsd = hasVariants
-     ? Math.min(...product.variants.map(v => v.price))
-     : product.prices?.usd || 0;
-  
-  // Stock (Si es variable, sumamos todas las variantes)
-  const totalStock = hasVariants
-     ? product.variants.reduce((acc, v) => acc + v.stock, 0)
-     : product.stock;
-
-  const hasStock = (product.inStock !== false) && (totalStock > 0);
-  const isLowStock = hasStock && totalStock <= 3;
+  // Precio en USD
+  const priceUsd = product.prices?.usd || 0;
 
   // Manejo de imagen
   const imageUrl = product.images?.main || product.images?.[0] || null;
@@ -86,48 +77,33 @@ const ProductCard = ({ product, onAddToCart, onClick }) => {
         <div className="mt-auto pt-3 border-t border-gray-50">
           <div className="flex items-end justify-between gap-2">
             
-            {/* Precio */}
+            {/* Solo Precio USD */}
             <div className="flex flex-col">
-              {hasVariants && (
-                 <span className="text-[10px] text-gray-400 font-bold uppercase">Desde</span>
-              )}
               <span className="text-2xl font-black text-gray-900 leading-none">
                 ${parseFloat(priceUsd).toFixed(2)}
               </span>
-              {!hasVariants && (
-                <span className="text-xs text-gray-400 font-medium mt-1">Precio Base</span>
-              )}
+              <span className="text-xs text-gray-400 font-medium mt-1">
+                Precio Base
+              </span>
             </div>
 
             {/* Botón de Acción */}
-            {hasVariants ? (
-                // Botón VER OPCIONES (Para productos variables)
-                <button
-                    onClick={(e) => { e.stopPropagation(); onClick(); }}
-                    className="p-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-all shadow-sm flex items-center justify-center"
-                    title="Ver Opciones"
-                >
-                    <Eye size={20} />
-                </button>
-            ) : (
-                // Botón AGREGAR DIRECTO (Para productos simples)
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation(); 
-                        if (hasStock) onAddToCart(product);
-                    }}
-                    disabled={!hasStock}
-                    className={`
-                        p-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm
-                        ${hasStock 
-                        ? 'bg-orange-600 text-white hover:bg-orange-700 hover:shadow-orange-200 hover:scale-105 active:scale-95' 
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
-                    `}
-                    title={hasStock ? "Agregar al carrito" : "Sin stock disponible"}
-                >
-                    {hasStock ? <ShoppingCart size={20} /> : <AlertCircle size={20} />}
-                </button>
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); 
+                if (hasStock) onAddToCart(product);
+              }}
+              disabled={!hasStock}
+              className={`
+                p-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm
+                ${hasStock 
+                  ? 'bg-orange-600 text-white hover:bg-orange-700 hover:shadow-orange-200 hover:scale-105 active:scale-95' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+              `}
+              title={hasStock ? "Agregar al carrito" : "Sin stock disponible"}
+            >
+              {hasStock ? <ShoppingCart size={20} /> : <AlertCircle size={20} />}
+            </button>
           </div>
         </div>
       </div>

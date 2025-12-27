@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { Loader2, Lock, LogIn, ArrowLeft, ShieldAlert } from 'lucide-react'; 
+import { Loader2, Lock, LogIn, ArrowLeft, ShieldAlert } from 'lucide-react'; // Agregué ShieldAlert
 
 // IMPORTA TUS COMPONENTES
 import StoreFront from './StoreFront';
@@ -10,25 +10,26 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
-  
-  // NUEVO: Controla si el Admin quiere ver el Dashboard o la Tienda
-  const [viewMode, setViewMode] = useState('admin'); // 'admin' | 'store'
 
   const auth = getAuth();
+
+  // LEEMOS TU LLAVE SECRETA DEL ARCHIVO .ENV
+  // Si no existe, usamos una por defecto muy difícil para que nadie entre por error
   const SECRET_KEY = import.meta.env.VITE_ADMIN_KEY || "clave_super_segura_por_defecto_123";
 
   useEffect(() => {
-    // 1. Detectar si hay alguien logueado
+    // 1. Detectar si hay alguien logueado (persistencia de sesión)
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
-      // Si se desloguea, forzamos vista admin para que caiga en login o tienda pública normal
-      if (!currentUser) setViewMode('admin'); 
     });
 
-    // 2. Seguridad por URL
+    // 2. SISTEMA DE SEGURIDAD PERSONALIZADO
+    // Buscamos el parámetro '?acceso=' en la URL
     const params = new URLSearchParams(window.location.search);
-    const accessAttempt = params.get('acceso'); 
+    const accessAttempt = params.get('acceso'); // Puedes cambiar 'acceso' por lo que quieras
+
+    // Comparamos lo que escribieron en la URL con tu clave secreta del .env
     if (accessAttempt === SECRET_KEY) {
       setShowLogin(true);
     }
@@ -39,7 +40,7 @@ function App() {
   const handleLogout = () => {
     signOut(auth);
     setShowLogin(false);
-    setViewMode('admin');
+    // Limpiamos la URL para que no quede el rastro de la llave
     window.history.pushState({}, document.title, "/");
   };
 
@@ -52,31 +53,17 @@ function App() {
     );
   }
 
-  // VISTA 2: USUARIO LOGUEADO (Admin)
+  // VISTA 2: Si hay usuario logueado -> MOSTRAR DASHBOARD
   if (user) {
-    // Aquí decidimos qué mostrar según el modo elegido
-    if (viewMode === 'admin') {
-      return (
-        <FullDashboard 
-          onSwitchToStore={() => setViewMode('store')} 
-        />
-      );
-    } else {
-      return (
-        <StoreFront 
-          isAdmin={true} 
-          onSwitchToAdmin={() => setViewMode('admin')} 
-        />
-      );
-    }
+    return <FullDashboard />; // FullDashboard ya maneja su propio contexto de usuario internamente
   }
 
-  // VISTA 3: Login Administrativo
+  // VISTA 3: Si la llave es correcta -> MOSTRAR LOGIN
   if (showLogin) {
     return <AdminLogin auth={auth} onCancel={() => setShowLogin(false)} />;
   }
 
-  // VISTA 4: Público General (Tienda Normal)
+  // VISTA 4: Por defecto -> MOSTRAR TIENDA
   return <StoreFront />;
 }
 

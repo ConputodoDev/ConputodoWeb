@@ -10,7 +10,7 @@ import { useCart } from './hooks/useCart';
 import Navbar from './components/storefront/Navbar';
 import Footer from './components/storefront/Footer';
 import CartDrawer from './components/storefront/CartDrawer';
-import { MessageCircle, LayoutDashboard } from 'lucide-react'; // Importamos Icono Dashboard
+import { MessageCircle } from 'lucide-react';
 
 // --- PÁGINAS ---
 import HomePage from './pages/HomePage';
@@ -20,9 +20,9 @@ import ContactPage from './pages/ContactPage';
 import LegalPage from './pages/LegalPage';
 
 // --- CONFIGURACIÓN RÁPIDA ---
-const COMPANY_PHONE = "584122163876";
+const COMPANY_PHONE = "584122163876"; // Tu número de WhatsApp
 
-// --- COMPONENTE FLOTANTE WHATSAPP ---
+// --- COMPONENTE FLOTANTE MEJORADO ---
 const FloatingWhatsapp = () => (
   <a 
     href={`https://wa.me/${COMPANY_PHONE}?text=Hola%20Conputodo,%20tengo%20una%20duda.`}
@@ -32,17 +32,21 @@ const FloatingWhatsapp = () => (
     aria-label="Contactar por WhatsApp"
   >
     <MessageCircle size={32} />
+    
+    {/* Tooltip que aparece al pasar el mouse */}
     <span className="absolute right-full mr-3 px-3 py-1 bg-white text-slate-800 text-xs font-bold rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-100">
       ¡Escríbenos!
     </span>
   </a>
 );
 
-// --- COMPONENTE COOKIE BANNER ---
+// --- COMPONENTE COOKIE BANNER MEJORADO ---
 const CookieBanner = ({ onAccept }) => {
   return (
     <div className="fixed bottom-0 left-0 w-full bg-neutral-900 border-t-4 border-[#FF6600] text-white p-6 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom duration-500">
       <div className="container mx-auto max-w-4xl flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        {/* ZONA DE TEXTO (Edita aquí el mensaje) */}
         <div className="flex items-start gap-3">
           <span className="text-2xl">🍪</span>
           <div>
@@ -53,8 +57,13 @@ const CookieBanner = ({ onAccept }) => {
             </p>
           </div>
         </div>
+
+        {/* ZONA DE BOTONES */}
         <div className="flex gap-3 shrink-0">
-          <button onClick={onAccept} className="bg-[#FF6600] hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg shadow-orange-900/50">
+          <button 
+            onClick={onAccept} 
+            className="bg-[#FF6600] hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg shadow-orange-900/50"
+          >
             Aceptar todo
           </button>
         </div>
@@ -63,7 +72,8 @@ const CookieBanner = ({ onAccept }) => {
   );
 };
 
-export default function StoreFront({ isAdmin, onSwitchToAdmin }) {
+export default function StoreFront() {
+  // --- ESTADOS GLOBALES ---
   const { products, loading, error } = useProducts();
   const { cart, isCartOpen, setIsCartOpen, addToCart, removeFromCart, clearCart, totalUSD, cartCount } = useCart();
   
@@ -73,9 +83,14 @@ export default function StoreFront({ isAdmin, onSwitchToAdmin }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState([]);
 
-  const [showCookieBanner, setShowCookieBanner] = useState(() => {
-    return !localStorage.getItem('conputodo_cookie_consent');
-  });
+  // ANTES:
+// const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+// AHORA (Inicialización Inteligente):
+const [showCookieBanner, setShowCookieBanner] = useState(() => {
+  // Verificamos si YA existe la cookie antes de pintar nada
+  return !localStorage.getItem('conputodo_cookie_consent');
+});
 
   useEffect(() => { localStorage.setItem('conputodo_view', currentView); }, [currentView]);
 
@@ -87,6 +102,7 @@ export default function StoreFront({ isAdmin, onSwitchToAdmin }) {
       } catch (e) { console.error("Error tasa:", e); }
     };
     fetchSettings();
+    //if (!localStorage.getItem('conputodo_cookie_consent')) setShowCookieBanner(true);
   }, []);
 
   const navigateTo = (view, params = null) => {
@@ -114,11 +130,35 @@ export default function StoreFront({ isAdmin, onSwitchToAdmin }) {
   const renderPage = () => {
     switch (currentView) {
       case 'home':
-        return <HomePage onNavigate={navigateTo} onAddToCart={addToCart} products={products} loading={loading} exchangeRate={exchangeRate} />;
+        return (
+          <HomePage 
+            onNavigate={navigateTo} 
+            onAddToCart={addToCart} 
+            products={products} 
+            loading={loading}
+            exchangeRate={exchangeRate}
+          />
+        );
       case 'catalog':
-        return <CatalogPage products={products} loading={loading} exchangeRate={exchangeRate} onAddToCart={addToCart} initialCategory={viewParams?.category || ''} onNavigate={navigateTo} />;
+        return (
+          <CatalogPage 
+            products={products}
+            loading={loading}
+            exchangeRate={exchangeRate}
+            onAddToCart={addToCart}
+            initialCategory={viewParams?.category || ''}
+            onNavigate={navigateTo} // <--- ¡ESTO FALTABA!
+          />
+        );
       case 'product-detail':
-        return <ProductDetailPage product={viewParams} onBack={() => navigateTo('catalog')} onAddToCart={addToCart} exchangeRate={exchangeRate} />;
+        return (
+          <ProductDetailPage 
+            product={viewParams}
+            onBack={() => navigateTo('catalog')}
+            onAddToCart={addToCart}
+            exchangeRate={exchangeRate}
+          />
+        );
       case 'contact': return <ContactPage />;
       case 'legal': return <LegalPage onBack={() => navigateTo('home')} />;
       default: return <HomePage onNavigate={navigateTo} products={products} loading={loading} />;
@@ -126,7 +166,7 @@ export default function StoreFront({ isAdmin, onSwitchToAdmin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-slate-800 flex flex-col relative">
+    <div className="min-h-screen bg-gray-50 font-sans text-slate-800 flex flex-col">
       <Navbar 
         cartCount={cartCount}
         onOpenCart={() => setIsCartOpen(true)}
@@ -147,21 +187,7 @@ export default function StoreFront({ isAdmin, onSwitchToAdmin }) {
         totalUSD={totalUSD}
         exchangeRate={exchangeRate}
       />
-      
-      {/* Botón WhatsApp Siempre visible */}
       <FloatingWhatsapp />
-
-      {/* Botón Volver al Dashboard (SOLO ADMIN) */}
-      {isAdmin && (
-        <button 
-          onClick={onSwitchToAdmin}
-          className="fixed bottom-6 left-6 z-[60] bg-slate-900 text-white px-5 py-3 rounded-full shadow-2xl hover:bg-black transition-all transform hover:scale-105 flex items-center gap-2 font-bold border-2 border-slate-700"
-        >
-          <LayoutDashboard size={20} className="text-[#FF6600]" />
-          Volver al Dashboard
-        </button>
-      )}
-
       {showCookieBanner && (
         <CookieBanner onAccept={() => { localStorage.setItem('conputodo_cookie_consent', 'true'); setShowCookieBanner(false); }} />
       )}

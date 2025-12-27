@@ -2,44 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Función auxiliar para saber si es el Administrador
-    // Como NO tienes registro público, cualquiera que esté logueado eres TÚ (el Admin).
-    function isAdmin() {
+    // Helper para verificar login
+    function isAuthenticated() {
       return request.auth != null;
     }
 
-    // --- 1. PRODUCTOS ---
-    // Cualquiera ve el catálogo. Solo Admin edita.
+    // --- 1. USUARIOS Y ROLES (NUEVO & CRÍTICO) ---
+    // Esto permite que el AdminAuthContext lea el rol del usuario
+    match /users/{email} {
+      allow read: if isAuthenticated() && request.auth.token.email == email;
+      allow write: if isAuthenticated(); // Solo admin debería, pero simplificamos por ahora
+    }
+
+    // --- 2. PRODUCTOS ---
     match /products/{productId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
-    // --- 2. PEDIDOS (Orders) ---
-    // Cualquiera puede CREAR un pedido (comprar).
-    // Solo el Admin puede LEER la lista de pedidos o modificar estados.
+    // --- 3. PEDIDOS ---
     match /orders/{orderId} {
       allow create: if true; 
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isAuthenticated();
     }
 
-    // --- 3. CONFIGURACIÓN (Tasas, Marketing) ---
-    // El público necesita LEER la tasa para calcular precios en Bs.
-    // Solo Admin puede cambiar la tasa.
+    // --- 4. CONFIGURACIÓN ---
     match /settings/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
     
-    // --- 4. SOLICITUDES MAYORISTAS ---
-    // Cualquiera puede enviar solicitud. Solo Admin las ve.
+    // --- 5. SOLICITUDES MAYORISTAS ---
     match /wholesale_requests/{requestId} {
       allow create: if true;
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
     
-    // --- 5. REGLA POR DEFECTO (Bloqueo total) ---
-    // Cualquier otra colección no mencionada aquí está bloqueada por seguridad.
+    // --- 6. DEFAULT ---
     match /{document=**} {
       allow read, write: if false;
     }

@@ -1,9 +1,9 @@
 import React from 'react';
 import AdminSidebar from './AdminSidebar';
-import { User, Menu, Eye } from 'lucide-react';
+import { User, Menu } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
-const AdminLayout = ({ children, currentView, onChangeView, pendingOrdersCount = 0, onSwitchToStore }) => {
+const AdminLayout = ({ children, currentView, onChangeView, pendingOrdersCount = 0 }) => {
   const { user } = useAdminAuth();
 
   return (
@@ -22,7 +22,7 @@ const AdminLayout = ({ children, currentView, onChangeView, pendingOrdersCount =
         {/* Header Superior */}
         <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shrink-0 z-10 shadow-sm">
              <div className="flex items-center gap-4">
-                 {/* Botón menú móvil */}
+                 {/* Botón menú móvil (pendiente de implementar lógica móvil completa) */}
                  <button className="md:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-500">
                     <Menu size={20}/>
                  </button>
@@ -32,14 +32,6 @@ const AdminLayout = ({ children, currentView, onChangeView, pendingOrdersCount =
              </div>
              
              <div className="flex items-center gap-4">
-                 {/* BOTÓN VER TIENDA (NUEVO) */}
-                 <button 
-                   onClick={onSwitchToStore}
-                   className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg text-sm font-bold transition-colors border border-neutral-200"
-                 >
-                   <Eye size={16} /> Ver Tienda
-                 </button>
-
                  <div className="hidden sm:flex flex-col text-right">
                      <span className="text-sm font-bold text-gray-800">{user?.email}</span>
                      <span className="text-[10px] text-[#FF6600] font-bold uppercase tracking-wider">Administrador</span>

@@ -9,18 +9,16 @@ const DataToolsPage = () => {
   const [repairing, setRepairing] = useState(false);
   const [logs, setLogs] = useState([]);
 
-  // --- 1. PLANTILLA CSV MEJORADA ---
+  // --- 1. PLANTILLA CSV ---
   const handleDownloadTemplate = () => {
-    // Nuevas columnas explícitas: stock_qty (número) y status
-    const headers = ["title", "price_usd", "stock_qty", "category", "brand", "sku", "description", "tags", "status"];
+    const headers = ["title", "price_usd", "category", "brand", "in_stock", "sku", "description", "tags"];
     const rows = [
-      ["Laptop HP 15", "450.00", "5", "Laptops", "HP", "HP-15-BW", "Core i5 8GB RAM", "oferta|nuevo", "published"],
-      ["Mouse Gamer", "25.00", "20", "Accesorios", "Logitech", "M-G502", "RGB 16000 DPI", "gamer", "draft"]
+      ["Laptop HP 15", "450.00", "Laptops", "HP", "si", "HP-15-BW", "Core i5 8GB RAM", "oferta|nuevo"]
     ];
     const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\r\n" + rows.map(e => e.join(",")).join("\r\n");
     const link = document.createElement("a");
     link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", "plantilla_conputodo_v2.csv");
+    link.setAttribute("download", "plantilla_conputodo.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -43,7 +41,6 @@ const DataToolsPage = () => {
     const lines = csvText.split("\n");
     const headers = lines[0].split(",").map(h => h.trim());
 
-    // Validar cabeceras críticas
     if (!headers.includes("title") || !headers.includes("price_usd")) {
       alert("❌ El CSV no tiene el formato correcto (faltan cabeceras 'title' o 'price_usd')");
       setImporting(false);
@@ -54,6 +51,7 @@ const DataToolsPage = () => {
     let errorCount = 0;
     const newLogs = [];
 
+    // Usamos batch (lotes) de 500 para mayor eficiencia
     const batch = writeBatch(db);
     let batchCount = 0;
 
@@ -61,7 +59,6 @@ const DataToolsPage = () => {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // Manejo básico de CSV (separado por comas)
       const values = line.split(",");
       const getData = (key) => {
         const index = headers.indexOf(key);
@@ -71,7 +68,6 @@ const DataToolsPage = () => {
       const title = getData("title");
       const priceUsd = parseFloat(getData("price_usd"));
       
-      // Validación básica
       if (!title || isNaN(priceUsd)) {
         newLogs.push({ type: 'error', msg: `Fila ${i+1}: Datos inválidos (Título o Precio)` });
         errorCount++;
@@ -82,25 +78,6 @@ const DataToolsPage = () => {
         const id = sanitizeFilename(title);
         const docRef = doc(db, "products", id);
         
-        // Lógica de Stock exacta
-        // Si la columna stock_qty existe, úsala. Si no, intenta leer "in_stock" legacy.
-        let finalStock = 0;
-        if (headers.includes("stock_qty")) {
-             finalStock = parseInt(getData("stock_qty")) || 0;
-        } else if (headers.includes("in_stock")) {
-             // Compatibilidad con CSV viejo
-             finalStock = ["si", "yes", "true", "1"].includes(getData("in_stock").toLowerCase()) ? 10 : 0;
-        }
-
-        // Lógica de Status
-        let finalStatus = 'published';
-        if (headers.includes("status")) {
-            const s = getData("status").toLowerCase();
-            if (['draft', 'borrador'].includes(s)) finalStatus = 'draft';
-            else if (['hidden', 'oculto'].includes(s)) finalStatus = 'hidden';
-            else finalStatus = 'published';
-        }
-
         const data = {
           title,
           slug: id,
@@ -109,11 +86,11 @@ const DataToolsPage = () => {
           category: getData("category"),
           brand: getData("brand"),
           sku: getData("sku"),
-          stock: finalStock,
-          inStock: finalStock > 0, // Calculado automáticamente
+          inStock: ["si", "yes", "true", "1"].includes(getData("in_stock").toLowerCase()),
+          stock: ["si", "yes", "true", "1"].includes(getData("in_stock").toLowerCase()) ? 100 : 0, // Stock numérico default
           tags: getData("tags").split("|").map(t => t.trim()).filter(Boolean),
-          status: finalStatus,
-          variants: [], // Importación masiva siempre entra como producto simple por defecto
+          status: 'published',
+          variants: [], // Aseguramos que tenga variants array
           updatedAt: new Date(),
           createdAt: new Date()
         };
@@ -122,14 +99,15 @@ const DataToolsPage = () => {
         batchCount++;
         successCount++;
         
+        // Firebase limita batch a 500 operaciones
         if (batchCount >= 450) {
             await batch.commit();
-            batchCount = 0; 
+            batchCount = 0; // Reset
         }
 
       } catch (error) {
         console.error(error);
-        newLogs.push({ type: 'error', msg: `Fila ${i+1}: Error en preparación` });
+        newLogs.push({ type: 'error', msg: `Fila ${i+1}: Error preparacion` });
         errorCount++;
       }
     }
@@ -142,7 +120,7 @@ const DataToolsPage = () => {
     alert(`Proceso terminado.\n✅ Importados: ${successCount}\n❌ Errores: ${errorCount}`);
   };
 
-  // --- 3. REPARACIÓN MASIVA (Mantenemos esta función por seguridad) ---
+  // --- 3. REPARACIÓN MASIVA (SCRIPT) ---
   const normalizeInventory = async () => {
     if (!window.confirm("⚠️ ESTO ESCANEARÁ Y CORREGIRÁ TODOS LOS PRODUCTOS.\n¿Deseas continuar?")) return;
     
@@ -174,7 +152,7 @@ const DataToolsPage = () => {
             }
             // 2.1 Falta campo Stock numérico (solo tiene inStock bool)
             if (data.stock === undefined && data.inStock === true) {
-                updates.stock = 999; // Valor legacy
+                updates.stock = 999;
                 needsUpdate = true;
             }
 
@@ -197,6 +175,11 @@ const DataToolsPage = () => {
                 fixedCount++;
                 newLogs.push({ type: 'success', msg: `Corregido: ${data.title}` });
             }
+
+            // Commit cada 450
+            // Nota: En un loop forEach async no podemos hacer await batch.commit() facilmente sin promesas
+            // Para simplicidad en este script de cliente, asumimos < 500 productos a corregir. 
+            // Si son más, habría que paginar.
         });
 
         if (batchCount > 0) {
@@ -226,8 +209,8 @@ const DataToolsPage = () => {
           <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-4">
             <Download size={24}/>
           </div>
-          <h3 className="font-bold text-sm mb-2">Plantilla CSV v2</h3>
-          <p className="text-xs text-neutral-500 mb-4 h-10">Descarga el nuevo formato con Stock exacto.</p>
+          <h3 className="font-bold text-sm mb-2">Plantilla CSV</h3>
+          <p className="text-xs text-neutral-500 mb-4 h-10">Descarga el formato para carga masiva.</p>
           <button onClick={handleDownloadTemplate} className="w-full py-2 border border-blue-200 text-blue-700 font-bold rounded-lg hover:bg-blue-50 text-xs flex items-center justify-center gap-2">
             <FileSpreadsheet size={16}/> Descargar
           </button>
@@ -254,7 +237,7 @@ const DataToolsPage = () => {
           </label>
         </div>
 
-        {/* Reparar */}
+        {/* Reparar (NUEVO) */}
         <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm flex flex-col items-center text-center hover:border-purple-300 transition-colors">
           <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-4">
              {repairing ? <Loader2 className="animate-spin" size={24}/> : <Wrench size={24}/>}

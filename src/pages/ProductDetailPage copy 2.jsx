@@ -6,6 +6,7 @@ const ProductDetailPage = ({ product, onBack, onAddToCart }) => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Resetear selección al cambiar de producto
     setSelectedVariant(null);
   }, [product]);
 
@@ -14,37 +15,42 @@ const ProductDetailPage = ({ product, onBack, onAddToCart }) => {
   // --- LÓGICA DE VARIANTES ---
   const hasVariants = product.variants && product.variants.length > 0;
   
-  // Display Helpers
+  // Determinar Precio a mostrar
   const displayPrice = hasVariants 
     ? (selectedVariant ? selectedVariant.price : Math.min(...product.variants.map(v => v.price)))
     : product.prices?.usd || 0;
 
+  // Determinar Stock a mostrar
   const displayStock = hasVariants
     ? (selectedVariant ? selectedVariant.stock : product.variants.reduce((acc, curr) => acc + curr.stock, 0))
     : product.stock;
 
+  // Determinar SKU a mostrar
   const displaySku = hasVariants
     ? (selectedVariant ? selectedVariant.sku : product.sku)
     : product.sku;
 
+  // Disponibilidad Global o Específica
   const isAvailable = displayStock > 0 && (product.inStock !== false);
 
   const mainImage = product.images?.main || product.images?.[0];
   const gallery = product.images?.gallery || (Array.isArray(product.images) ? product.images : []) || [];
 
-  // --- ADD TO CART ---
+  // --- MANEJO DE ADD TO CART ---
   const handleAddToCart = () => {
     if (hasVariants && !selectedVariant) {
       alert("⚠️ Por favor selecciona una opción (Talla, Color o Combo) antes de agregar.");
       return;
     }
+
+    // Si es variable, creamos un objeto único para el carrito
     const itemToAdd = hasVariants ? {
       ...product,
-      id: `${product.id}-${selectedVariant.id}`,
+      id: `${product.id}-${selectedVariant.id}`, // ID Único Compuesto
       originalId: product.id,
-      title: `${product.title} - ${selectedVariant.name}`,
-      prices: { usd: selectedVariant.price },
-      stock: selectedVariant.stock,
+      title: `${product.title} - ${selectedVariant.name}`, // Título Descriptivo
+      prices: { usd: selectedVariant.price }, // Precio Específico
+      stock: selectedVariant.stock, // Stock Específico
       variantId: selectedVariant.id
     } : product;
 
@@ -139,14 +145,9 @@ const ProductDetailPage = ({ product, onBack, onAddToCart }) => {
             </div>
           )}
 
-          {/* DESCRIPCIÓN RICA (HTML) */}
-          <div 
-             className="prose text-slate-600 mb-8 text-sm leading-relaxed"
-             dangerouslySetInnerHTML={{ 
-                 // Permitimos saltos de línea y formateo básico
-                 __html: (product.description || "Sin descripción detallada.").replace(/\n/g, '<br/>') 
-             }}
-          />
+          <div className="prose text-slate-600 mb-8 text-sm leading-relaxed whitespace-pre-wrap">
+            {product.description || "Sin descripción detallada."}
+          </div>
 
           {/* Specs */}
           {product.specs && product.specs.length > 0 && (

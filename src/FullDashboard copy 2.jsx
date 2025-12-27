@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAdminAuth, AdminAuthProvider } from './context/AdminAuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -22,16 +22,6 @@ const DashboardRouter = ({ onSwitchToStore }) => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [editParams, setEditParams] = useState(null); 
 
-  // REDIRECCIÓN DE SEGURIDAD PARA VENTAS
-  useEffect(() => {
-    if (user?.role === 'sales') {
-        // El vendedor SOLO puede estar en product-list
-        if (currentView !== 'product-list') {
-            setCurrentView('product-list');
-        }
-    }
-  }, [user, currentView]);
-
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-100">
@@ -47,12 +37,6 @@ const DashboardRouter = ({ onSwitchToStore }) => {
 
   // Router interno
   const renderContent = () => {
-    // Si es Vendedor, forzamos siempre la lista de productos
-    // (Doble capa de seguridad: visual y lógica)
-    if (user.role === 'sales') {
-       return <ProductListPage onChangeView={() => {}} />;
-    }
-
     switch (currentView) {
       case 'dashboard': return <DashboardPage />;
       case 'orders': return <OrderListPage />;
@@ -105,7 +89,7 @@ const DashboardRouter = ({ onSwitchToStore }) => {
       currentView={currentView} 
       onChangeView={setCurrentView}
       pendingOrdersCount={0}
-      onSwitchToStore={onSwitchToStore} 
+      onSwitchToStore={onSwitchToStore} // Pasamos la función al Layout
     >
       {renderContent()}
     </AdminLayout>
